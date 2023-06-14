@@ -1,23 +1,140 @@
 import math 
 
-fs = 100 # number of points to sample in frame 
-scaleFactor = 20 # pixels/unit
-h = 600
-w = 600
-dx = w/100 # pixels per adjacent sampling x-values x
+fs = 100 
+scaleFactor = 20 
+h = 800
+w = 800
+dx = w/100 
+
+# Initialize slider positions and parameter values
+sliderX = [50, 50, 50, 50]
+adjustment = [0, 0, 0, 0]
+sliderLabels = ["a", "k", "d", "c"]
+
+# Initialize radio global variables
+radioSin, radioQuadratic, radioLinear, radioExponential = False, False, False, False
+radPosX = 600
+
+def colorWheel(funcName, prop="fill"): # function to dynamically change element colors 
+    if prop == "fill":
+        if funcName == "sin":
+            fill(255, 0, 0)
+        if funcName == "quadratic":
+            fill(0, 255, 0)
+        if funcName == "linear":
+            fill(0, 0, 255)
+        if funcName == "exponential":
+            fill(255, 255, 0)
+    if prop == "stroke":
+        if funcName == "sin":
+            stroke(255, 0, 0)
+        if funcName == "quadratic":
+            stroke(0, 255, 0)
+        if funcName == "linear":
+            stroke(0, 0, 255)
+        if funcName == "exponential":
+            stroke(255, 255, 0)
 
 def setup():
-    size(h, w)  # Set the size of the window
+    global radioSin, radioQuadratic, radioLinear, radioExponential
+    
+    size(h, w)  
+    # Set initial radio button states
+    radioSin = True
 
-# draw() code is run at many times per second (at the frameRate)
+    # Initialize sliders with range, initial value, and step size
+    for i in range(4):
+        sliderX[i] += i * 100
+        adjustment[i] = 1.0 * (sliderX[i] - 50) / (350 - 50) # [0.0, 1.0] initialization, uses formula for normalizing values between 0 and 1, z = (x-min)/(max-min)
+        # print(adjustment[i])
+
 def draw():
-    background(255)  # Set the background to white
+    global radioSin, radioQuadratic, radioLinear, radioExponential
+    global sliderX, adjustment
+
+    background(255)
     drawGrid()
     drawAxes()
-    sin(10)
-    quadratic()
-    linear()
-    exponential()
+
+    # Get the current value of the sliders
+    a = adjustment[0]*20 - 10  # scale adjustment to [-10, 10]
+    k = adjustment[1]*20 - 10
+    d = adjustment[2]*20 - 10
+    c = adjustment[3]*20 - 10
+
+    # Draw the corresponding graph based on which radio button is selected
+    if radioSin:
+        sin(a, k, d, c)
+    elif radioQuadratic:
+        quadratic(a, k, d, c)
+    elif radioLinear:
+        linear(a, k, d, c)
+    elif radioExponential:
+        exponential(a, k, d, c)
+
+    drawRadioButtons()
+      
+    drawSliders()  # draw sliders last so they appear on top of the functions
+
+def mouseClicked():
+    global radioSin, radioQuadratic, radioLinear, radioExponential
+
+    global sliderX, adjustment
+
+    for i in range(4):
+        if mouseX >= 50 and mouseX <= 350 and mouseY >= 40 + i * 50 and mouseY <= 60 + i * 50:
+            sliderX[i] = mouseX
+            adjustment[i] = 1.0 * (sliderX[i] - 50) / (350 - 50) # adjustment values are always between 0 and 1 
+
+    # Add logic to change the radio button state when one is clicked
+    # The radio buttons are assumed to be drawn at the following specific coordinates:
+    r = 10  # radius of radio buttons
+    if dist(mouseX, mouseY, radPosX, 50) < r:
+        radioSin = True
+        radioQuadratic = False
+        radioLinear = False
+        radioExponential = False
+    elif dist(mouseX, mouseY, radPosX, 80) < r:
+        radioSin = False
+        radioQuadratic = True
+        radioLinear = False
+        radioExponential = False
+    elif dist(mouseX, mouseY, radPosX, 110) < r:
+        radioSin = False
+        radioQuadratic = False
+        radioLinear = True
+        radioExponential = False
+    elif dist(mouseX, mouseY, radPosX, 140) < r:
+        radioSin = False
+        radioQuadratic = False
+        radioLinear = False
+        radioExponential = True
+
+def mouseDragged():
+    global sliderX, adjustment
+
+    for i in range(4):
+        if mouseX >= 50 and mouseX <= 350 and mouseY >= 40 + i * 50 and mouseY <= 60 + i * 50: # checks which slider is being dragged based on height
+            sliderX[i] = mouseX
+            adjustment[i] = 1.0 * (sliderX[i] - 50) / (350 - 50)
+
+# New function for drawing sliders
+def drawSliders():
+    global sliderX, sliderLabels
+
+    strokeWeight(3)
+    stroke(0)
+
+    for i in range(4):
+        fill(100)
+        line(50, 50 + i * 50, 350, 50 + i * 50)
+        line(50, 40 + i * 50, 50, 60 + i * 50)
+        line(350, 40 + i * 50, 350, 60 + i * 50)
+        rectMode(CENTER)
+        rect(sliderX[i], 50 + i * 50, 10, 30)
+        fill(0)
+        text(sliderLabels[i] + ": " + str(adjustment[i]*20 - 10), 360, 53 + i * 50)
+        noFill()
 
 def drawGrid():
     stroke(200)  # Set the grid color to light gray
@@ -38,6 +155,7 @@ def drawAxes():
 
 def sin(a=1, k=1, d=0, c=0):
     beginShape()
+    colorWheel("sin", "stroke")
     noFill()  # Specify no fill
     x = 0
     y = (-1*a*math.sin(k*(1.0/scaleFactor*(x-width/2)-d))+c)*scaleFactor + height/2 # reflect across x-axis since x increments go from top to bottom of window, scale output by scaleFactor, vertically shift by height/2 to start from y=0
@@ -56,56 +174,94 @@ def sin(a=1, k=1, d=0, c=0):
     curveVertex(x, y)  # Additional vertex for smooth curve
     endShape()
 
-def quadratic(a=1, b=0, c=0):
+def quadratic(a=1, k=1, d=0, c=0):
+    colorWheel("quadratic", "stroke")
     beginShape()
     noFill()
 
     # Additional vertex for smooth curve at the start
     x = 0
-    y = (-a*((1.0/scaleFactor*(x-width/2))**2)+b*(1.0/scaleFactor*(x-width/2))+c)*scaleFactor + height/2
+    # y = (-a*((1.0/scaleFactor*(x-width/2))**2)+b*(1.0/scaleFactor*(x-width/2))+c)*scaleFactor + height/2
+    y = (-a*k*(1.0/scaleFactor*(x-width/2)-d)**2+c)*scaleFactor + height/2 
     curveVertex(x, y)
     
     for i in range(fs):
         x = i*dx
-        y = (-a*((1.0/scaleFactor*(x-width/2))**2)+b*(1.0/scaleFactor*(x-width/2))+c)*scaleFactor + height/2
+        y = (-a*k*(1.0/scaleFactor*(x-width/2)-d)**2+c)*scaleFactor + height/2 
         curveVertex(x, y)
     
     # Additional vertex for smooth curve at the end
     x = (fs-1)*dx
-    y = (-a*((1.0/scaleFactor*(x-width/2))**2)+b*(1.0/scaleFactor*(x-width/2))+c)*scaleFactor + height/2
+    y = (-a*k*(1.0/scaleFactor*(x-width/2)-d)**2+c)*scaleFactor + height/2 
     curveVertex(x, y) 
 
     endShape()
 
-def linear(m=1, b=0):
+def linear(a, k, d, c):
     beginShape()
+    colorWheel("linear", "stroke")
     noFill()
     for i in range(fs):
         x = i*dx 
-        y = (-m*(1.0/scaleFactor*(x-width/2))+b)*scaleFactor + height/2
+        # y = (-m*(1.0/scaleFactor*(x-width/2))+b)*scaleFactor + height/2
+        y = (-a*k*(1.0/scaleFactor*(x-width/2)-d)+c) * scaleFactor + height/2
         curveVertex(x, y)
 
     endShape()
 
-def exponential(a=1, b=2, k=1, d=0, c=0):
+def exponential(a=1, k=1, d=0, c=0):
     beginShape()
+    colorWheel("exponential", "stroke")
     noFill()  # Specify no fill
 
     # Additional vertex for smooth curve at the start
     x = 0
-    y = (-a*b**(k*(1.0/scaleFactor*(x-width/2)-d))+c)*scaleFactor + height/2
+    # y = (-a*b**(k*(1.0/scaleFactor*(x-width/2)-d))+c)*scaleFactor + height/2
+    y = (-a*2**(k*(1.0/scaleFactor*(x-width/2)-d))+c)*scaleFactor + height/2
     curveVertex(x, y)
 
     for i in range(fs):
         x = i*dx
-        y = (-a*b**(k*(1.0/scaleFactor*(x-width/2)-d))+c)*scaleFactor + height/2
+        y = (-a*2**(k*(1.0/scaleFactor*(x-width/2)-d))+c)*scaleFactor + height/2
         curveVertex(x, y)
     
     # Additional vertex for smooth curve at the end
     x = (fs-1)*dx
-    y = (-a*b**(k*(1.0/scaleFactor*(x-width/2)-d))+c)*scaleFactor + height/2
+    y = (-a*2**(k*(1.0/scaleFactor*(x-width/2)-d))+c)*scaleFactor + height/2
     curveVertex(x, y)  
 
     endShape()
 
+def drawRadioButtons():
+    fill(200)
+    stroke(0)
+    ellipse(radPosX, 50, 20, 20)  # sin
+    ellipse(radPosX, 80, 20, 20)  # quadratic
+    ellipse(radPosX, 110, 20, 20)  # linear
+    ellipse(radPosX, 140, 20, 20)  # exponential
+    
+    # fill(200)
+    textSize(16)
+    colorWheel("sin")
+    text("sin", radPosX+50, 50)
+    colorWheel("quadratic")
+    text("quadratic", radPosX+50, 80)
+    colorWheel("linear")
+    text("linear", radPosX+50, 110)
+    colorWheel("exponential")
+    text("exponential", radPosX+50, 140)
+
+    # fill(150)
+    if radioSin:
+        colorWheel("sin")
+        ellipse(radPosX, 50, 10, 10)
+    elif radioQuadratic:
+        colorWheel("quadratic")
+        ellipse(radPosX, 80, 10, 10)
+    elif radioLinear:
+        colorWheel("linear")
+        ellipse(radPosX, 110, 10, 10)
+    elif radioExponential:
+        colorWheel("exponential")
+        ellipse(radPosX, 140, 10, 10)
 
