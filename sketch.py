@@ -1,10 +1,10 @@
 import math 
 
-fs = 100 
+fs = 100
 scaleFactor = 20 
 h = 800
 w = 800
-dx = w/100 
+dx = w/fs
 
 # Initialize slider positions and parameter values
 sliderX = [50, 50, 50, 50]
@@ -118,9 +118,14 @@ def mouseDragged():
             sliderX[i] = mouseX
             adjustment[i] = 1.0 * (sliderX[i] - 50) / (350 - 50)
 
-# New function for drawing sliders
+# drawing sliders
 def drawSliders():
     global sliderX, sliderLabels
+
+    # Draw the box first so it's underneath the sliders
+    fill(255, 255, 255, 150)  # semi-transparent white fill
+    rectMode(CORNER)  # Switch to CORNER mode
+    rect(30, 20, 400, 210)  # Draw a rectangle to enclose the sliders
 
     strokeWeight(3)
     stroke(0)
@@ -130,11 +135,12 @@ def drawSliders():
         line(50, 50 + i * 50, 350, 50 + i * 50)
         line(50, 40 + i * 50, 50, 60 + i * 50)
         line(350, 40 + i * 50, 350, 60 + i * 50)
-        rectMode(CENTER)
+        rectMode(CENTER)  # Switch back to CENTER mode for the sliders
         rect(sliderX[i], 50 + i * 50, 10, 30)
         fill(0)
-        text(sliderLabels[i] + ": " + str(adjustment[i]*20 - 10), 360, 53 + i * 50)
+        text(sliderLabels[i] + ": " + str(round(adjustment[i]*20 - 10, 1)), 360, 53 + i * 50)
         noFill()
+
 
 def drawGrid():
     stroke(200)  # Set the grid color to light gray
@@ -158,19 +164,19 @@ def sin(a=1, k=1, d=0, c=0):
     colorWheel("sin", "stroke")
     noFill()  # Specify no fill
     x = 0
-    y = (-1*a*math.sin(k*(1.0/scaleFactor*(x-width/2)-d))+c)*scaleFactor + height/2 # reflect across x-axis since x increments go from top to bottom of window, scale output by scaleFactor, vertically shift by height/2 to start from y=0
+    y = (-1*a*math.sin(k*(1.0/scaleFactor*(x-width/2)-d))-c)*scaleFactor + height/2 # reflect across x-axis since x increments go from top to bottom of window, scale output by scaleFactor, vertically shift by height/2 to start from y=0
     curveVertex(x, y)  # Additional vertex for smooth curve
     
     for i in range(fs):
         x = i*dx
         # print(x)
         # print(k*((x-width/2.0)/scaleFactor-d)) # divide shifted x by scaleFactor since exactly scaleFactor number of pixels make up a unit on the graph 
-        y = (-1*a*math.sin(k*(1.0/scaleFactor*(x-width/2)-d))+c)*scaleFactor + height/2 # input to sine should be a float value 
+        y = (-1*a*math.sin(k*(1.0/scaleFactor*(x-width/2)-d))-c)*scaleFactor + height/2 # input to sine should be a float value 
         # print(y)
         curveVertex(x, y)
     
     x = (fs-1)*dx
-    y = (-1*a*math.sin(k*(1.0/scaleFactor*(x-width/2)-d))+c)*scaleFactor + height/2
+    y = (-1*a*math.sin(k*(1.0/scaleFactor*(x-width/2)-d))-c)*scaleFactor + height/2
     curveVertex(x, y)  # Additional vertex for smooth curve
     endShape()
 
@@ -182,17 +188,17 @@ def quadratic(a=1, k=1, d=0, c=0):
     # Additional vertex for smooth curve at the start
     x = 0
     # y = (-a*((1.0/scaleFactor*(x-width/2))**2)+b*(1.0/scaleFactor*(x-width/2))+c)*scaleFactor + height/2
-    y = (-a*k*(1.0/scaleFactor*(x-width/2)-d)**2+c)*scaleFactor + height/2 
+    y = (-a*k*(1.0/scaleFactor*(x-width/2)-d)**2-c)*scaleFactor + height/2 
     curveVertex(x, y)
     
     for i in range(fs):
         x = i*dx
-        y = (-a*k*(1.0/scaleFactor*(x-width/2)-d)**2+c)*scaleFactor + height/2 
+        y = (-a*k*(1.0/scaleFactor*(x-width/2)-d)**2-c)*scaleFactor + height/2 
         curveVertex(x, y)
     
     # Additional vertex for smooth curve at the end
     x = (fs-1)*dx
-    y = (-a*k*(1.0/scaleFactor*(x-width/2)-d)**2+c)*scaleFactor + height/2 
+    y = (-a*k*(1.0/scaleFactor*(x-width/2)-d)**2-c)*scaleFactor + height/2 
     curveVertex(x, y) 
 
     endShape()
@@ -204,7 +210,7 @@ def linear(a, k, d, c):
     for i in range(fs):
         x = i*dx 
         # y = (-m*(1.0/scaleFactor*(x-width/2))+b)*scaleFactor + height/2
-        y = (-a*k*(1.0/scaleFactor*(x-width/2)-d)+c) * scaleFactor + height/2
+        y = (-a*k*(1.0/scaleFactor*(x-width/2)-d)-c) * scaleFactor + height/2
         curveVertex(x, y)
 
     endShape()
@@ -217,22 +223,29 @@ def exponential(a=1, k=1, d=0, c=0):
     # Additional vertex for smooth curve at the start
     x = 0
     # y = (-a*b**(k*(1.0/scaleFactor*(x-width/2)-d))+c)*scaleFactor + height/2
-    y = (-a*2**(k*(1.0/scaleFactor*(x-width/2)-d))+c)*scaleFactor + height/2
+    y = (-a*2**(k*(1.0/scaleFactor*(x-width/2)-d))-c)*scaleFactor + height/2
     curveVertex(x, y)
 
     for i in range(fs):
         x = i*dx
-        y = (-a*2**(k*(1.0/scaleFactor*(x-width/2)-d))+c)*scaleFactor + height/2
+        y = (-a*2**(k*(1.0/scaleFactor*(x-width/2)-d))-c)*scaleFactor + height/2
         curveVertex(x, y)
     
     # Additional vertex for smooth curve at the end
     x = (fs-1)*dx
-    y = (-a*2**(k*(1.0/scaleFactor*(x-width/2)-d))+c)*scaleFactor + height/2
+    y = (-a*2**(k*(1.0/scaleFactor*(x-width/2)-d))-c)*scaleFactor + height/2
     curveVertex(x, y)  
 
     endShape()
 
 def drawRadioButtons():
+    global radPosX
+
+    # Draw the box first so it's underneath the radio buttons
+    fill(255, 255, 255, 150)  # semi-transparent white fill
+    rectMode(CORNER)  # Switch to CORNER mode
+    rect(radPosX-30, 20, 200, 150)  # Draw a rectangle to enclose the radio buttons
+
     fill(200)
     stroke(0)
     ellipse(radPosX, 50, 20, 20)  # sin
@@ -240,7 +253,6 @@ def drawRadioButtons():
     ellipse(radPosX, 110, 20, 20)  # linear
     ellipse(radPosX, 140, 20, 20)  # exponential
     
-    # fill(200)
     textSize(16)
     colorWheel("sin")
     text("sin", radPosX+50, 50)
@@ -264,4 +276,7 @@ def drawRadioButtons():
     elif radioExponential:
         colorWheel("exponential")
         ellipse(radPosX, 140, 10, 10)
+
+
+
 
