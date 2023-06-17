@@ -14,39 +14,41 @@ sliderLabels = ["a", "k", "d", "c"]
 # Initialize radio global variables
 radioSin, radioQuadratic, radioLinear, radioExponential = False, False, False, False
 radPosX = 600
+showSliders = True
 
-def colorWheel(funcName, prop="fill"): # function to dynamically change element colors 
+# Function to dynamically change element colors 
+def colorWheel(funcName, prop="fill"): 
     if prop == "fill":
         if funcName == "sin":
             fill(255, 0, 0)
         if funcName == "quadratic":
             fill(0, 255, 0)
         if funcName == "linear":
-            fill(0, 0, 255)
+            fill(3, 61, 255)
         if funcName == "exponential":
-            fill(255, 255, 0)
+            fill(107, 3, 252)
     if prop == "stroke":
         if funcName == "sin":
             stroke(255, 0, 0)
         if funcName == "quadratic":
             stroke(0, 255, 0)
         if funcName == "linear":
-            stroke(0, 0, 255)
+            stroke(3, 61, 255)
         if funcName == "exponential":
-            stroke(255, 255, 0)
+            stroke(107, 3, 252)
 
 def setup():
-    global radioSin, radioQuadratic, radioLinear, radioExponential
+    global radioSin, radioQuadratic, radioLinear, radioExponential, showSliders
     
     size(h, w)  
     # Set initial radio button states
     radioSin = True
+    showSliders = True
 
     # Initialize sliders with range, initial value, and step size
     for i in range(4):
         sliderX[i] += i * 100
         adjustment[i] = 1.0 * (sliderX[i] - 50) / (350 - 50) # [0.0, 1.0] initialization, uses formula for normalizing values between 0 and 1, z = (x-min)/(max-min)
-        # print(adjustment[i])
 
 def draw():
     global radioSin, radioQuadratic, radioLinear, radioExponential
@@ -74,10 +76,11 @@ def draw():
 
     drawRadioButtons()
       
-    drawSliders()  # draw sliders last so they appear on top of the functions
+    if showSliders:
+        drawSliders()  # draw sliders last so they appear on top of the functions
 
 def mouseClicked():
-    global radioSin, radioQuadratic, radioLinear, radioExponential
+    global radioSin, radioQuadratic, radioLinear, radioExponential, showSliders
 
     global sliderX, adjustment
 
@@ -109,6 +112,10 @@ def mouseClicked():
         radioQuadratic = False
         radioLinear = False
         radioExponential = True
+
+    r = 10  # radius of radio buttons
+    if dist(mouseX, mouseY, radPosX, 170) < r:  # change 170 to the y-coordinate where you want to place the new button
+        showSliders = not showSliders  # toggle the state of showSliders
 
 def mouseDragged():
     global sliderX, adjustment
@@ -169,10 +176,7 @@ def sin(a=1, k=1, d=0, c=0):
     
     for i in range(fs):
         x = i*dx
-        # print(x)
-        # print(k*((x-width/2.0)/scaleFactor-d)) # divide shifted x by scaleFactor since exactly scaleFactor number of pixels make up a unit on the graph 
-        y = (-1*a*math.sin(k*(1.0/scaleFactor*(x-width/2)-d))-c)*scaleFactor + height/2 # input to sine should be a float value 
-        # print(y)
+        y = (-1*a*math.sin(k*(1.0/scaleFactor*(x-width/2)-d))-c)*scaleFactor + height/2 # input to sine should be a float value, cast by using a float value in the operation 
         curveVertex(x, y)
     
     x = (fs-1)*dx
@@ -187,7 +191,6 @@ def quadratic(a=1, k=1, d=0, c=0):
 
     # Additional vertex for smooth curve at the start
     x = 0
-    # y = (-a*((1.0/scaleFactor*(x-width/2))**2)+b*(1.0/scaleFactor*(x-width/2))+c)*scaleFactor + height/2
     y = (-a*k*(1.0/scaleFactor*(x-width/2)-d)**2-c)*scaleFactor + height/2 
     curveVertex(x, y)
     
@@ -209,7 +212,6 @@ def linear(a, k, d, c):
     noFill()
     for i in range(fs):
         x = i*dx 
-        # y = (-m*(1.0/scaleFactor*(x-width/2))+b)*scaleFactor + height/2
         y = (-a*k*(1.0/scaleFactor*(x-width/2)-d)-c) * scaleFactor + height/2
         curveVertex(x, y)
 
@@ -222,29 +224,34 @@ def exponential(a=1, k=1, d=0, c=0):
 
     # Additional vertex for smooth curve at the start
     x = 0
-    # y = (-a*b**(k*(1.0/scaleFactor*(x-width/2)-d))+c)*scaleFactor + height/2
     y = (-a*2**(k*(1.0/scaleFactor*(x-width/2)-d))-c)*scaleFactor + height/2
+    if y > height: y = height
+    if y < 0: y = 0
     curveVertex(x, y)
 
     for i in range(fs):
         x = i*dx
         y = (-a*2**(k*(1.0/scaleFactor*(x-width/2)-d))-c)*scaleFactor + height/2
+        if y > height: y = height
+        if y < 0: y = 0
         curveVertex(x, y)
     
     # Additional vertex for smooth curve at the end
     x = (fs-1)*dx
     y = (-a*2**(k*(1.0/scaleFactor*(x-width/2)-d))-c)*scaleFactor + height/2
+    if y > height: y = height
+    if y < 0: y = 0
     curveVertex(x, y)  
 
     endShape()
 
 def drawRadioButtons():
-    global radPosX
+    global radPosX, showSliders
 
     # Draw the box first so it's underneath the radio buttons
     fill(255, 255, 255, 150)  # semi-transparent white fill
     rectMode(CORNER)  # Switch to CORNER mode
-    rect(radPosX-30, 20, 200, 150)  # Draw a rectangle to enclose the radio buttons
+    rect(radPosX-30, 20, 200, 170)  # Draw a rectangle to enclose the radio buttons
 
     fill(200)
     stroke(0)
@@ -276,6 +283,16 @@ def drawRadioButtons():
     elif radioExponential:
         colorWheel("exponential")
         ellipse(radPosX, 140, 10, 10)
+
+    fill(200)
+    stroke(0)
+    ellipse(radPosX, 170, 20, 20)  # sliders toggle
+    textSize(16)
+    fill(0)
+    text("Show Sliders", radPosX+50, 175)
+    if showSliders:
+        fill(0)
+        ellipse(radPosX, 170, 10, 10)
 
 
 
